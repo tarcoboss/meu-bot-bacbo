@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(page_title="BAC BO REAL-TIME", layout="wide")
 
-# Estilização Visual
+# Estilização Visual - CORRIGIDO: unsafe_allow_html
 st.markdown("""
 <style>
     [data-testid="stAppViewContainer"] { background-color: #050505; color: white; }
@@ -16,7 +16,7 @@ st.markdown("""
         border: 2px solid #3b82f6; text-align: center;
     }
 </style>
-""", unsafe_allow_stdio=True)
+""", unsafe_allow_html=True)
 
 # --- INICIALIZAÇÃO DO PLACAR ---
 if 'wins' not in st.session_state: st.session_state.wins = 0
@@ -33,7 +33,7 @@ def get_data():
         balls = soup.find_all('div', class_='history-ball')
         return [b.text.strip()[0] for b in balls[:10]]
     except:
-        return ["P", "B", "P"]
+        return ["?", "?", "?"]
 
 # --- LÓGICA ---
 def analyze():
@@ -48,7 +48,7 @@ def analyze():
             st.session_state.active_signal = None
 
 # --- INTERFACE ---
-st.title("🤖 BAC BO ULTRA-BOT")
+st.markdown("<h1 style='text-align: center; color: #3b82f6;'>🤖 BAC BO ULTRA-BOT</h1>", unsafe_allow_html=True)
 
 # Placar
 c1, c2, c3 = st.columns(3)
@@ -68,7 +68,7 @@ if st.session_state.active_signal:
         <h1 style='font-size: 50px;'>APOSTAR NO: {st.session_state.active_signal}</h1>
         <p>⚠️ Proteção: EMPATE (TIE)</p>
     </div>
-    """, unsafe_allow_stdio=True)
+    """, unsafe_allow_html=True)
     
     col_w, col_l = st.columns(2)
     if col_w.button("✅ GREEN"):
@@ -80,7 +80,7 @@ if st.session_state.active_signal:
         st.session_state.active_signal = None
         st.rerun()
 else:
-    st.markdown("<h3 style='text-align: center; color: #666;'>🔎 Analisando mesa em tempo real...</h3>", unsafe_allow_stdio=True)
+    st.markdown("<h3 style='text-align: center; color: #666;'>🔎 Analisando mesa em tempo real...</h3>", unsafe_allow_html=True)
 
 # Histórico Visual
 st.divider()
@@ -88,5 +88,5 @@ dados_reais = get_data()
 st.write("Últimos resultados da mesa: " + " | ".join(dados_reais))
 
 # Refresh automático
-time.sleep(10)
+time.sleep(12)
 st.rerun()
