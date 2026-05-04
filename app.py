@@ -2,54 +2,102 @@ import streamlit as st
 import time
 import cloudscraper
 import re
-import random
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="BAC BO PREDICTOR AI - tarcoboss", layout="wide")
+st.set_page_config(page_title="BAC BO ELITE AI", layout="wide")
 
-# --- DESIGN CSS EVOLUTION GAMING UI ---
+# --- DESIGN "GLASS & WATER" ULTRA-PREMIUM ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
-    [data-testid="stAppViewContainer"] { background: radial-gradient(circle, #1a1a1a 0%, #000000 100%); color: white; font-family: 'Roboto', sans-serif; }
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;900&display=swap');
+
+    /* Fundo Dinâmico */
+    [data-testid="stAppViewContainer"] {
+        background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+        color: white;
+        font-family: 'Poppins', sans-serif;
+    }
+    
     [data-testid="stHeader"] { background: rgba(0,0,0,0); }
 
-    /* Painel de Apostas */
-    .bet-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 20px; }
-    .bet-card {
-        width: 260px; height: 160px; border-radius: 15px;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        font-weight: 900; font-size: 22px; position: relative; border: 2px solid rgba(255,255,255,0.1);
-        transition: all 0.4s ease-in-out;
-    }
-    .jogador { background: linear-gradient(180deg, #0044cc 0%, #002266 100%); }
-    .banca { background: linear-gradient(180deg, #cc0033 0%, #66001a 100%); }
-    .empate {
-        width: 160px; height: 160px; background: radial-gradient(circle, #cc9933 0%, #664411 100%);
-        border-radius: 50%; border: 3px solid #ffcc66;
-        display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 16px;
+    /* Efeito Vidro (Glassmorphism) */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 25px;
+        padding: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
     }
 
-    /* Efeito de Prediction (Piscando) */
-    @keyframes prediction-glow {
-        0% { box-shadow: 0 0 5px #fff; border-color: #fff; transform: scale(1); }
-        50% { box-shadow: 0 0 50px #fff; border-color: #fff; transform: scale(1.05); }
-        100% { box-shadow: 0 0 5px #fff; border-color: #fff; transform: scale(1); }
+    /* Layout de Apostas Estilo Evolution */
+    .bet-grid {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        margin: 40px 0;
     }
-    .active-prediction { animation: prediction-glow 0.6s infinite !important; z-index: 100; border: 4px solid #fff !important; }
 
-    /* Bead Road */
-    .road-container {
-        background: #f0f0f0; border-radius: 8px; padding: 10px;
-        display: grid; grid-template-columns: repeat(20, 1fr); grid-template-rows: repeat(6, 1fr);
-        gap: 3px; width: fit-content; margin: 20px auto; border: 1px solid #444;
+    .bet-box {
+        width: 300px; height: 180px;
+        border-radius: 25px;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        position: relative;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        border: 1px solid rgba(255,255,255,0.1);
+        overflow: hidden;
     }
-    .bead { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: white; }
-    .bead-P { background-color: #0044cc; }
-    .bead-B { background-color: #cc0033; }
-    .bead-T { background-color: #cc9933; position: relative; border: 1px solid #fff; }
 
-    .confidence-meter { text-align: center; font-size: 14px; color: #00ff00; margin-top: 10px; font-weight: bold; }
+    /* Cores com efeito de profundidade */
+    .player { background: linear-gradient(135deg, rgba(0, 85, 255, 0.4) 0%, rgba(0, 40, 120, 0.6) 100%); }
+    .banker { background: linear-gradient(135deg, rgba(255, 0, 68, 0.4) 0%, rgba(120, 0, 30, 0.6) 100%); }
+    .tie { 
+        width: 180px; height: 180px; border-radius: 50%;
+        background: linear-gradient(135deg, rgba(255, 170, 0, 0.3) 0%, rgba(100, 70, 0, 0.5) 100%);
+        border: 2px solid rgba(255, 170, 0, 0.5);
+    }
+
+    /* EFEITO ÁGUA / GLOW LÍQUIDO NO SINAL */
+    @keyframes water-pulse {
+        0% { box-shadow: 0 0 20px rgba(255,255,255,0.2), inset 0 0 10px rgba(255,255,255,0.1); transform: scale(1); }
+        50% { box-shadow: 0 0 60px rgba(255,255,255,0.6), inset 0 0 20px rgba(255,255,255,0.4); transform: scale(1.03); }
+        100% { box-shadow: 0 0 20px rgba(255,255,255,0.2), inset 0 0 10px rgba(255,255,255,0.1); transform: scale(1); }
+    }
+
+    .prediction-active {
+        animation: water-pulse 1.5s infinite ease-in-out;
+        border: 3px solid #fff !important;
+        z-index: 50;
+    }
+
+    /* Bead Road Branca e Limpa (Igual ao Cassino) */
+    .bead-road {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 12px;
+        padding: 12px;
+        display: grid;
+        grid-template-columns: repeat(20, 1fr);
+        gap: 3px;
+        width: 100%;
+        max-width: 900px;
+        margin: 20px auto;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    }
+    
+    .bead {
+        width: 28px; height: 28px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; font-weight: bold; color: white;
+    }
+    .b-P { background: #0055ff; box-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+    .b-B { background: #ff0044; box-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+    .b-T { background: #ffaa00; border: 2px solid #fff; color: #000; }
+
+    .text-glow { text-shadow: 0 0 10px rgba(255,255,255,0.5); font-weight: 900; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -57,78 +105,75 @@ st.markdown("""
 if 'wins' not in st.session_state: st.session_state.wins = 0
 if 'losses' not in st.session_state: st.session_state.losses = 0
 
-def fetch_data():
+def fetch_results():
     try:
         scraper = cloudscraper.create_scraper()
         res = scraper.get("https://www.trackcasino.com/bacbo", timeout=10).text
-        found = re.findall(r'>(P|B|T)<', res)
-        return found if found else ["P", "B", "T", "P"]
+        return re.findall(r'>(P|B|T)<', res)[:120]
     except:
-        return ["P", "B", "P", "B"]
+        return ["P", "B", "T", "P", "B", "P", "B", "B"]
 
-def analyze_prediction(history):
-    if len(history) < 5: return None, 0
-    
-    score_p = 0
-    score_b = 0
-    last_5 = history[:5]
-    
-    # 1. Estratégia Anti-Clump (Quebra de 3)
-    if history[:3] == ['P', 'P', 'P']: score_b += 3
-    if history[:3] == ['B', 'B', 'B']: score_p += 3
-    
-    # 2. Estratégia Dragon (Tendência Forte)
-    if history[:5] == ['B', 'B', 'B', 'B', 'B']: score_b += 4
-    if history[:5] == ['P', 'P', 'P', 'P', 'P']: score_p += 4
-    
-    # 3. Estratégia Ping-Pong
-    if history[:4] == ['P', 'B', 'P', 'B']: score_p += 3
-    if history[:4] == ['B', 'P', 'B', 'P']: score_b += 3
-    
-    # 4. Decisão Final
-    if score_p > score_b and score_p >= 3: return "P", min(score_p * 10, 98)
-    if score_b > score_p and score_b >= 3: return "B", min(score_b * 10, 98)
-    return None, 0
+# Estratégia de Elite
+def get_prediction(history):
+    if len(history) < 3: return None
+    # 1. Quebra de Sequência de 3
+    if history[:3] == ['P', 'P', 'P']: return "B"
+    if history[:3] == ['B', 'B', 'B']: return "P"
+    # 2. Padrão Alternado (Ping Pong)
+    if history[:4] == ['P', 'B', 'P', 'B']: return "P"
+    if history[:4] == ['B', 'P', 'B', 'P']: return "B"
+    return None
 
-# --- EXECUÇÃO ---
-history = fetch_data()
-pred, confidence = analyze_prediction(history)
+# --- UI PRINCIPAL ---
+history = fetch_results()
+prediction = get_prediction(history)
 
-# --- INTERFACE ---
-st.markdown(f"<h1 style='text-align: center; color: #fff; font-size: 1.5rem;'>BAC BO PREDICTOR AI - tarcoboss</h1>", unsafe_allow_html=True)
-st.markdown(f"<p style='text-align: center; color: #00ff00; font-size: 0.8rem;'>PLACAR: {st.session_state.wins} ✅ | {st.session_state.losses} ❌</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; margin-bottom: 0;' class='text-glow'>BAC BO PRO AI</h1>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align: center; color: #00ffcc;'>PLATAFORMA DE ANÁLISE tarcoboss | ACERTOS: {st.session_state.wins}</p>", unsafe_allow_html=True)
 
-# Painel de Apostas
-p_class = "active-prediction" if pred == "P" else ""
-b_class = "active-prediction" if pred == "B" else ""
+# PAINEL DE APOSTAS COM EFEITO DE ÁGUA
+p_active = "prediction-active" if prediction == "P" else ""
+b_active = "prediction-active" if prediction == "B" else ""
 
 st.markdown(f"""
-<div class="bet-container">
-    <div class="bet-card jogador {p_class}">JOGADOR<br><span style="font-size:12px">1:1</span></div>
-    <div class="empate">EMPATE<br><span style="font-size:12px">88:1</span></div>
-    <div class="bet-card banca {b_class}">BANCA<br><span style="font-size:12px">1:1</span></div>
+<div class="bet-grid">
+    <div class="bet-box player {p_active}">
+        <span style="font-size: 12px; opacity: 0.6;">1:1</span>
+        <span style="font-size: 28px; font-weight: 900;">JOGADOR</span>
+    </div>
+    <div class="bet-box tie">
+        <span style="font-size: 10px; opacity: 0.8;">EMPATE</span>
+        <span style="font-size: 20px; font-weight: 900;">88:1</span>
+    </div>
+    <div class="bet-box banker {b_active}">
+        <span style="font-size: 12px; opacity: 0.6;">1:1</span>
+        <span style="font-size: 28px; font-weight: 900;">BANCA</span>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
-if pred:
-    st.markdown(f"<div class='confidence-meter'>PREDIÇÃO: ENTRAR EM { 'JOGADOR' if pred=='P' else 'BANCA' } ({confidence}% DE CONFIANÇA)</div>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #ffaa00;'>🛡️ PROTEGER EMPATE (OBRIGATÓRIO)</p>", unsafe_allow_html=True)
+# MENSAGEM DE PREDIÇÃO
+if prediction:
+    st.markdown(f"<h2 style='text-align: center; color: #fff;'>🎯 ENTRADA CONFIRMADA: <span style='color: #00ffcc;'>{'JOGADOR' if prediction=='P' else 'BANCA'}</span></h2>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #ffaa00;'>PROTEGER NO EMPATE (10% DO VALOR)</p>", unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
-    if col1.button("✅ GREEN"):
+    col1, col2, col3 = st.columns([1,1,1])
+    if col2.button("✅ REGISTRAR GREEN"):
         st.session_state.wins += 1
         st.rerun()
-    if col2.button("❌ LOSS"):
-        st.session_state.losses += 1
-        st.rerun()
 else:
-    st.markdown("<p style='text-align: center; color: #444; margin-top: 15px;'>🔎 AGUARDANDO PADRÃO DE ALTA ASSERTIVIDADE...</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #555;' class='status-scanning'>🔎 MONITORANDO TENDÊNCIAS DA MESA...</p>", unsafe_allow_html=True)
 
-# BEAD ROAD
-st.markdown("<div class='road-container'>", unsafe_allow_html=True)
-road_html = "".join([f'<div class="bead bead-{r}">{r}</div>' for r in history[:120]])
+# BEAD ROAD ESTILO EVOLUTION
+st.markdown("<div class='bead-road'>", unsafe_allow_html=True)
+road_html = "".join([f'<div class="bead b-{r}">{r}</div>' for r in history])
 st.markdown(road_html + "</div>", unsafe_allow_html=True)
 
-# Refresh
-time.sleep(10)
+# BOTÃO DE LOSS (DISCRETO)
+if st.button("❌ Marcar Loss"):
+    st.session_state.losses += 1
+    st.rerun()
+
+# Atualização automática
+time.sleep(12)
 st.rerun()
