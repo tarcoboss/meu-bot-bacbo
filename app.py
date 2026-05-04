@@ -4,70 +4,64 @@ import cloudscraper
 import re
 
 # --- CONFIGURAÇÃO ---
-st.set_page_config(page_title="BAC BO PRO AI", layout="wide")
+st.set_page_config(page_title="BAC BO PREDICTOR", layout="wide")
 
-# --- DESIGN PROFISSIONAL "ESTILO EVOLUTION" ---
+# --- DESIGN CYBER-PRO (LIMPO E VIVO) ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@500;700&display=swap');
 
-    /* Fundo de Casino Profissional */
+    /* Fundo Digital Vivo */
     [data-testid="stAppViewContainer"] {
-        background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), 
-                    url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=2073');
-        background-size: cover;
-        background-position: center;
+        background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
+        background-attachment: fixed;
         color: white;
-        font-family: 'Inter', sans-serif;
+        font-family: 'Rajdhani', sans-serif;
     }
+    
     [data-testid="stHeader"] { background: rgba(0,0,0,0); }
 
-    /* Contentor da Mesa */
-    .mesa-bacbo {
-        position: relative;
+    /* Mesa de Apostas Futurista */
+    .mesa-wrapper {
         display: flex;
         justify-content: center;
         align-items: center;
         width: 100%;
-        max-width: 600px;
-        margin: 40px auto;
-        height: 120px; /* Altura controlada */
+        max-width: 450px;
+        margin: 30px auto;
+        position: relative;
+        height: 140px;
     }
 
-    /* Asas (Jogador e Banca) */
     .asa {
-        width: 250px;
+        flex: 1;
         height: 100px;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        position: relative;
+        padding: 0 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.2);
-        transition: all 0.4s ease;
-        z-index: 1;
+        transition: all 0.3s ease;
     }
 
-    .asa-jogador {
-        background: linear-gradient(180deg, rgba(0, 68, 204, 0.9) 0%, rgba(0, 34, 102, 0.9) 100%);
-        border-radius: 50px 0 0 50px;
+    .asa-p {
+        background: linear-gradient(180deg, #0055ff 0%, #0022aa 100%);
+        border-radius: 30px 0 0 30px;
         text-align: left;
-        padding-left: 35px;
     }
 
-    .asa-banca {
-        background: linear-gradient(180deg, rgba(204, 0, 51, 0.9) 0%, rgba(102, 0, 26, 0.9) 100%);
-        border-radius: 0 50px 50px 0;
+    .asa-b {
+        background: linear-gradient(180deg, #ff0044 0%, #aa0022 100%);
+        border-radius: 0 30px 30px 0;
         text-align: right;
-        padding-right: 35px;
     }
 
-    /* Círculo do Empate Corrigido */
-    .centro-tie {
+    .tie-circle {
         position: absolute;
-        width: 125px;
-        height: 125px;
-        background: radial-gradient(circle, #cc9933 0%, #664411 100%);
+        width: 110px;
+        height: 110px;
+        background: radial-gradient(circle, #ffcc33 0%, #886611 100%);
         border-radius: 50%;
         z-index: 10;
         left: 50%;
@@ -76,35 +70,34 @@ st.markdown("""
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        border: 4px solid #ffcc66;
-        box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        border: 3px solid #fff;
+        box-shadow: 0 0 25px rgba(255, 204, 51, 0.5);
     }
 
-    /* Efeito Piscante no Sinal (Luz de Água) */
-    @keyframes aqua-glow {
-        0% { box-shadow: 0 0 10px #fff; filter: brightness(1); }
-        50% { box-shadow: 0 0 50px #fff; filter: brightness(1.8); }
-        100% { box-shadow: 0 0 10px #fff; filter: brightness(1); }
+    /* Efeito de Piscada (Liquid Glow) */
+    @keyframes glow-pulse {
+        0% { filter: brightness(1); box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        50% { filter: brightness(2); box-shadow: 0 0 40px #fff; }
+        100% { filter: brightness(1); box-shadow: 0 0 10px rgba(255,255,255,0.2); }
     }
     .piscando {
-        animation: aqua-glow 0.7s infinite alternate !important;
-        border: 3px solid #fff !important;
+        animation: glow-pulse 0.6s infinite alternate;
         z-index: 20;
+        border: 2px solid #fff !important;
     }
 
-    /* Bead Road (Grade Estilo Evolution) */
-    .bead-road-card {
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 8px;
+    /* Bead Road Horizontal */
+    .road-box {
+        background: white;
+        border-radius: 10px;
         padding: 8px;
-        width: 95%;
-        max-width: 500px;
+        width: 100%;
+        max-width: 450px;
         margin: 20px auto;
-        border: 2px solid #222;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        overflow-x: auto;
     }
 
-    .grid-bead {
+    .road-grid {
         display: grid;
         grid-template-rows: repeat(6, 20px);
         grid-auto-flow: column;
@@ -119,16 +112,15 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 9px;
-        font-weight: 900;
+        font-size: 10px;
+        font-weight: 800;
         color: white;
     }
-    .b-P { background-color: #0044cc; }
-    .b-B { background-color: #cc0033; }
-    .b-T { background-color: #cc9933; border: 1px solid #fff; }
+    .b-P { background: #0055ff; }
+    .b-B { background: #ff0044; }
+    .b-T { background: #cc9933; border: 1px solid #fff; }
 
-    /* Stats */
-    .stats { text-align: center; font-size: 11px; font-weight: bold; margin-top: 15px; }
+    .label-bet { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 18px; letter-spacing: 1px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -136,61 +128,58 @@ st.markdown("""
 if 'wins' not in st.session_state: st.session_state.wins = 0
 if 'losses' not in st.session_state: st.session_state.losses = 0
 
-def fetch_live_data():
+def fetch_results():
     try:
         scraper = cloudscraper.create_scraper()
         res = scraper.get("https://www.trackcasino.com/bacbo", timeout=10).text
-        found = re.findall(r'>(P|B|T)<', res)
-        # Fallback caso falte dados
-        return found if len(found) > 10 else ["P", "B", "P", "B", "T", "P", "B"]
+        return re.findall(r'>(P|B|T)<', res)
     except:
         return ["P", "B", "T"]
 
-# Execução
-history = fetch_live_data()
+history = fetch_results()
 pred = None
 if len(history) >= 3:
     if history[:3] == ["P", "P", "P"]: pred = "B"
     elif history[:3] == ["B", "B", "B"]: pred = "P"
 
 # --- UI ---
-st.markdown("<h2 style='text-align: center; font-weight: 900; letter-spacing: 2px;'>BAC BO ELITE AI</h2>", unsafe_allow_html=True)
-st.markdown(f"<p style='text-align: center; color: #00ffcc; font-size: 12px;'>GREEN: {st.session_state.wins} | LOSS: {st.session_state.losses}</p>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center; font-family: Orbitron; color: #00d2ff;'>BAC BO PREDICTOR AI</h2>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align: center; font-weight: bold;'>SCORE: ✅ {st.session_state.wins} | ❌ {st.session_state.losses}</p>", unsafe_allow_html=True)
 
-# MESA DE APOSTAS
-j_blink = "piscando" if pred == "P" else ""
-b_blink = "piscando" if pred == "B" else ""
+# MESA
+p_glow = "piscando" if pred == "P" else ""
+b_glow = "piscando" if pred == "B" else ""
 
 st.markdown(f"""
-<div class="mesa-bacbo">
-    <div class="asa asa-jogador {j_blink}">
+<div class="mesa-wrapper">
+    <div class="asa asa-p {p_glow}">
         <span style="font-size: 10px; opacity: 0.7;">1:1</span>
-        <span style="font-size: 18px; font-weight: 900; letter-spacing: 1px;">JOGADOR</span>
+        <span class="label-bet">JOGADOR</span>
     </div>
-    <div class="centro-tie">
-        <span style="font-size: 8px; opacity: 0.9; font-weight: bold;">EMPATE</span>
-        <span style="font-size: 20px; font-weight: 900;">88:1</span>
+    <div class="tie-circle">
+        <span style="font-size: 10px; font-weight: bold;">EMPATE</span>
+        <span style="font-size: 22px; font-weight: 900;">88:1</span>
     </div>
-    <div class="asa asa-banca {b_blink}">
+    <div class="asa asa-b {b_glow}">
         <span style="font-size: 10px; opacity: 0.7;">1:1</span>
-        <span style="font-size: 18px; font-weight: 900; letter-spacing: 1px;">BANCA</span>
+        <span class="label-bet">BANCA</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='stats'><span style='color:#0088ff'>JOGADOR 54%</span> | <span style='color:#ffcc00'>EMPATE 10%</span> | <span style='color:#ff3333'>BANCA 36%</span></div>", unsafe_allow_html=True)
+# STATS
+st.markdown("<p style='text-align: center; opacity: 0.6; font-size: 12px;'>TENDÊNCIA: 🔵 54% | 🟡 10% | 🔴 36%</p>", unsafe_allow_html=True)
 
-# BEAD ROAD (GRADE BRANCA CORRIGIDA)
-road_html = '<div class="bead-road-card"><div class="grid-bead">'
-# No Bac Bo, o histórico flui da esquerda para a direita, coluna por coluna
-for r in reversed(history[:120]): 
+# ROAD
+road_html = '<div class="road-box"><div class="road-grid">'
+for r in reversed(history[:120]):
     road_html += f'<div class="bead b-{r}">{r if r!="T" else ""}</div>'
 road_html += '</div></div>'
 st.markdown(road_html, unsafe_allow_html=True)
 
 # CONTROLES
 if pred:
-    st.markdown(f"<h3 style='text-align:center; color:white;'>ENTRADA: {'🔵 JOGADOR' if pred=='P' else '🔴 BANCA'}</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center; color: white;'>ENTRADA: {'JOGADOR' if pred=='P' else 'BANCA'}</h3>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
         if st.button("✅ GREEN"):
@@ -201,8 +190,7 @@ if pred:
             st.session_state.losses += 1
             st.rerun()
 else:
-    st.markdown("<p style='text-align: center; opacity: 0.5;'>🔎 MONITORANDO MESA EM TEMPO REAL...</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #555;'>🔎 AGUARDANDO PADRÃO ESTATÍSTICO...</p>", unsafe_allow_html=True)
 
-# Auto-refresh
 time.sleep(12)
 st.rerun()
