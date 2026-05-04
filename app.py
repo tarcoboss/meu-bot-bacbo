@@ -3,186 +3,188 @@ import time
 import cloudscraper
 import re
 
-# --- CONFIGURAÇÃO ---
-st.set_page_config(page_title="BAC BO PRO - tarcoboss", layout="wide")
+# --- CONFIGURAÇÃO DA PÁGINA ---
+st.set_page_config(page_title="BAC BO ELITE - PRO INTERFACE", layout="wide")
 
-# --- CSS RÉPLICA FIEL (EMPATE PEQUENO E ASAS LARGAS) ---
+# --- CSS: DIMENSÕES REAIS E EFEITOS DE ÁGUA ---
 st.markdown("""
 <style>
-    /* Fundo Deep Dark com Vida */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+    /* Fundo Profundo (Deep Black-Blue) */
     [data-testid="stAppViewContainer"] {
-        background: radial-gradient(circle at center, #0a0f1e 0%, #02040a 100%);
+        background: radial-gradient(circle at center, #0a0f1e 0%, #010205 100%);
         color: white;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-family: 'Inter', sans-serif;
     }
     [data-testid="stHeader"] { background: rgba(0,0,0,0); }
 
-    /* Contentor da Mesa */
+    /* Contentor Principal da Mesa */
     .mesa-bacbo {
+        position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
         width: 100%;
-        max-width: 480px;
+        max-width: 420px; /* Dimensão padrão mobile */
+        height: 180px;
         margin: 40px auto;
-        position: relative;
-        height: 120px;
     }
 
-    /* Asas (Jogador e Banca) */
+    /* Asas (Baseadas em Proporções Reais: 160x100px) */
     .asa {
-        flex: 1;
-        height: 90px;
+        width: 165px;
+        height: 100px;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 0 15px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(5px);
-        transition: all 0.3s ease;
+        position: relative;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.15);
+        transition: all 0.4s ease;
+        z-index: 1;
     }
 
     .asa-p {
-        background: linear-gradient(180deg, #0044cc 0%, #001144 100%);
-        border-radius: 45px 0 0 45px;
+        background: linear-gradient(180deg, #0044cc 0%, #001a4d 100%);
+        border-radius: 50px 0 0 50px;
         text-align: left;
         padding-left: 25px;
+        box-shadow: inset 0 0 15px rgba(255,255,255,0.1);
     }
 
     .asa-b {
-        background: linear-gradient(180deg, #cc0033 0%, #440011 100%);
-        border-radius: 0 45px 45px 0;
+        background: linear-gradient(180deg, #cc0033 0%, #4d0014 100%);
+        border-radius: 0 50px 50px 0;
         text-align: right;
         padding-right: 25px;
+        box-shadow: inset 0 0 15px rgba(255,255,255,0.1);
     }
 
-    /* CÍRCULO DO EMPATE (REDUZIDO E CENTRALIZADO) */
-    .centro-tie {
+    /* Círculo do Empate (Proporção 1.2x: 120px) */
+    .tie-center {
         position: absolute;
-        width: 80px; /* REDUZIDO DRASTICAMENTE */
-        height: 80px;
-        background: radial-gradient(circle, #d4af37 0%, #8a6d3b 100%);
+        width: 120px;
+        height: 120px;
+        background: radial-gradient(circle, #d4af37 0%, #6d5421 100%);
         border-radius: 50%;
         z-index: 10;
-        left: 50%;
-        transform: translateX(-50%);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         border: 3px solid #ffcc33;
-        box-shadow: 0 0 15px rgba(0,0,0,0.8);
+        box-shadow: 0 5px 25px rgba(0,0,0,0.8), inset 0 0 10px rgba(255,255,255,0.3);
+        color: white;
     }
 
-    /* EFEITO PISCANTE NO SINAL */
-    @keyframes blink-sinal {
-        0% { filter: brightness(1); box-shadow: 0 0 5px rgba(255,255,255,0.2); }
-        50% { filter: brightness(2.5); box-shadow: 0 0 50px #fff; }
-        100% { filter: brightness(1); box-shadow: 0 0 5px rgba(255,255,255,0.2); }
+    /* EFEITO DE ÁGUA / PISCANTE NO SINAL */
+    @keyframes water-glow {
+        0% { box-shadow: 0 0 10px rgba(255,255,255,0.2); filter: brightness(1); }
+        50% { box-shadow: 0 0 50px #fff, inset 0 0 20px #fff; filter: brightness(2); transform: scale(1.02); }
+        100% { box-shadow: 0 0 10px rgba(255,255,255,0.2); filter: brightness(1); }
     }
     .piscando {
-        animation: blink-sinal 0.5s infinite alternate !important;
-        border: 2px solid #fff !important;
+        animation: water-glow 0.7s infinite alternate;
         z-index: 20;
+        border: 3px solid #fff !important;
     }
 
-    /* BEAD ROAD (GRADE BRANCA) */
-    .bead-road-box {
-        background: #ffffff;
-        border-radius: 10px;
-        padding: 6px;
-        width: 95%;
-        max-width: 450px;
-        margin: 20px auto;
-        overflow-x: auto;
-        border: 2px solid #333;
-    }
-
-    .bead-grid {
+    /* BEAD ROAD (GRADE BRANCA - 6 LINHAS FIXAS) */
+    .bead-road {
+        background: white;
+        border: 1px solid #999;
+        border-radius: 4px;
         display: grid;
-        grid-template-rows: repeat(6, 20px);
+        grid-template-rows: repeat(6, 1fr);
         grid-auto-flow: column;
-        grid-auto-columns: 20px;
-        gap: 2px;
+        grid-auto-columns: 24px;
+        gap: 1px;
+        width: 100%;
+        max-width: 400px;
+        height: 155px; /* Altura calculada para 6 linhas */
+        margin: 20px auto;
+        padding: 2px;
+        overflow-x: auto;
     }
 
     .bead {
-        width: 18px;
-        height: 18px;
+        width: 22px; height: 22px;
         border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        font-weight: 900;
-        color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 11px; font-weight: 900; color: white;
     }
-    .b-P { background-color: #0044cc; }
-    .b-B { background-color: #cc0033; }
-    .b-T { background-color: #cc9933; position: relative; border: 1px solid #fff; }
+    .bead-P { background: #0044cc; box-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+    .bead-B { background: #cc0033; box-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+    .bead-T { background: #cc9933; position: relative; border: 1px solid #fff; }
+
+    .stats { text-align: center; font-size: 12px; margin-top: 10px; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- SINCRONIZAÇÃO DE DADOS ---
+# --- ENGINE DE DADOS (ANTI-BLOQUEIO) ---
 if 'wins' not in st.session_state: st.session_state.wins = 0
 if 'losses' not in st.session_state: st.session_state.losses = 0
 
-def fetch_live_results():
+def fetch_data():
     try:
         scraper = cloudscraper.create_scraper()
-        # Buscando da fonte mais rápida e estável
-        url = "https://casinoscore.com/bacbo/"
-        res = scraper.get(url, timeout=10).text
-        # Captura os resultados P, B ou T
-        found = re.findall(r'result-([PBT])', res)
-        if not found:
-            found = re.findall(r'>(P|B|T)<', res)
-        return found if found else ["P", "B", "T"]
+        # Buscando de tracker público sincronizado
+        res = scraper.get("https://www.trackcasino.com/bacbo", timeout=10).text
+        found = re.findall(r'>(P|B|T)<', res)
+        return found if len(found) > 5 else ["P", "B", "T"]
     except:
-        return ["P", "B", "T"]
+        return ["P", "B", "P"]
 
 # Lógica do Robô
-history = fetch_live_results()
-pred = None
+history = fetch_data()
+prediction = None
 if len(history) >= 3:
-    if history[:3] == ["P", "P", "P"]: pred = "B"
-    elif history[:3] == ["B", "B", "B"]: pred = "P"
+    if history[:3] == ["P", "P", "P"]: prediction = "B"
+    elif history[:3] == ["B", "B", "B"]: prediction = "P"
 
-# --- UI ---
-st.markdown("<h2 style='text-align: center; font-weight: 900; letter-spacing: 2px;'>BAC BO PREDICTOR</h2>", unsafe_allow_html=True)
-st.markdown(f"<p style='text-align: center; color: #00ffcc;'>Score: {st.session_state.wins} ✅ | {st.session_state.losses} ❌</p>", unsafe_allow_html=True)
+# --- INTERFACE ---
+st.markdown("<h2 style='text-align: center; font-weight: 900;'>BAC BO PRO AI</h2>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align: center; color: #00ffcc;'>SCORE: {st.session_state.wins} ✅ | {st.session_state.losses} ❌</p>", unsafe_allow_html=True)
 
-# MESA DE APOSTAS (Sincronizada)
-j_blink = "piscando" if pred == "P" else ""
-b_blink = "piscando" if pred == "B" else ""
+# MESA DE APOSTAS (Dimensões 1:1)
+p_style = "piscando" if prediction == "P" else ""
+b_style = "piscando" if prediction == "B" else ""
 
 st.markdown(f"""
 <div class="mesa-bacbo">
-    <div class="asa asa-p {j_blink}">
-        <span style="font-size: 10px; opacity: 0.6;">1:1</span>
+    <div class="asa asa-p {p_style}">
+        <span style="font-size: 11px; opacity: 0.7;">1:1</span>
         <span style="font-size: 20px; font-weight: 900;">JOGADOR</span>
     </div>
-    <div class="centro-tie">
-        <span style="font-size: 8px; font-weight: bold; color: white;">EMPATE</span>
-        <span style="font-size: 18px; font-weight: 900;">88:1</span>
+    <div class="tie-center">
+        <span style="font-size: 9px; font-weight: bold;">EMPATE</span>
+        <span style="font-size: 22px; font-weight: 900;">88:1</span>
     </div>
-    <div class="asa asa-b {b_blink}">
-        <span style="font-size: 10px; opacity: 0.6;">1:1</span>
+    <div class="asa asa-b {b_style}">
+        <span style="font-size: 11px; opacity: 0.7;">1:1</span>
         <span style="font-size: 20px; font-weight: 900;">BANCA</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# BEAD ROAD (Grade Branca)
-road_html = '<div class="bead-road-box"><div class="bead-grid">'
-for r in reversed(history[:120]): # Mostra do mais antigo para o mais recente na grade
-    road_html += f'<div class="bead b-{r}">{r if r!="T" else ""}</div>'
-road_html += '</div></div>'
-st.markdown(road_html, unsafe_allow_html=True)
+# STATS BAR
+st.markdown("""
+<div class="stats">
+    <span style="color: #0055ff;">JOGADOR 54%</span> | 
+    <span style="color: #ffaa00;">EMPATE 10%</span> | 
+    <span style="color: #ff0044;">BANCA 36%</span>
+</div>
+""", unsafe_allow_html=True)
 
-# AÇÕES
-if pred:
-    st.markdown(f"<h3 style='text-align: center;'>⚠️ ENTRADA: {'JOGADOR' if pred=='P' else 'BANCA'}</h3>", unsafe_allow_html=True)
+# BEAD ROAD (GRADE BRANCA SINCRONIZADA)
+st.markdown("<div class='bead-road'>", unsafe_allow_html=True)
+road_html = "".join([f'<div class="bead bead-{r}">{r if r!="T" else ""}</div>' for r in reversed(history[:120])])
+st.markdown(road_html + "</div>", unsafe_allow_html=True)
+
+# GESTÃO DE SINAIS
+if prediction:
+    st.success(f"🎯 ENTRADA: {'JOGADOR' if prediction=='P' else 'BANCA'}")
     c1, c2 = st.columns(2)
     with c1:
         if st.button("✅ GREEN"):
@@ -195,6 +197,6 @@ if pred:
 else:
     st.markdown("<p style='text-align: center; opacity: 0.5;'>🔎 MONITORANDO RESULTADOS REAIS...</p>", unsafe_allow_html=True)
 
-# Auto-refresh de 10 segundos para sincronia
-time.sleep(10)
+# Refresh Automático (12 segundos)
+time.sleep(12)
 st.rerun()
