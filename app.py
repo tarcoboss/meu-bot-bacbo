@@ -3,203 +3,195 @@ import time
 import cloudscraper
 import re
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(page_title="BAC BO REAL-TIME INTERFACE", layout="wide")
+# --- CONFIGURAÇÃO ---
+st.set_page_config(page_title="BAC BO PRO", layout="wide")
 
-# --- CSS: RÉPLICA 100% BAC BO EVOLUTION ---
+# --- CSS RÉPLICA FIEL (CORRIGIDO) ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap');
-
+    /* Fundo Escuro */
     [data-testid="stAppViewContainer"] {
-        background: url('https://w0.peakpx.com/wallpaper/433/384/HD-wallpaper-dark-blur-abstract.jpg');
-        background-size: cover;
+        background-color: #060606;
         color: white;
-        font-family: 'Roboto Condensed', sans-serif;
     }
-    
     [data-testid="stHeader"] { background: rgba(0,0,0,0); }
 
-    /* ÁREA DE APOSTAS - 100% IGUAL AO JOGO */
-    .mesa-bacbo {
+    /* Contentor da Mesa */
+    .mesa-container {
+        position: relative;
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 250px;
-        margin: 20px auto;
-        position: relative;
-        max-width: 800px;
+        width: 100%;
+        max-width: 500px;
+        margin: 50px auto;
+        height: 180px;
     }
 
+    /* Asas (Jogador e Banca) */
     .asa {
-        width: 320px;
-        height: 150px;
+        flex: 1;
+        height: 130px;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding: 20px;
+        padding: 15px;
         position: relative;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.2);
-        transition: all 0.4s ease;
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.3s ease;
     }
 
     .asa-jogador {
-        background: linear-gradient(to right, rgba(0, 50, 200, 0.8), rgba(0, 30, 100, 0.6));
-        border-radius: 40px 0 0 40px;
+        background: linear-gradient(180deg, #0044cc 0%, #002266 100%);
+        border-radius: 60px 0 0 60px;
         text-align: left;
-        margin-right: -20px;
+        padding-left: 30px;
     }
 
     .asa-banca {
-        background: linear-gradient(to left, rgba(200, 0, 50, 0.8), rgba(100, 0, 30, 0.6));
-        border-radius: 0 40px 40px 0;
+        background: linear-gradient(180deg, #cc0033 0%, #66001a 100%);
+        border-radius: 0 60px 60px 0;
         text-align: right;
-        margin-left: -20px;
+        padding-right: 30px;
     }
 
-    .centro-empate {
-        width: 180px;
-        height: 180px;
-        background: radial-gradient(circle, #d4af37, #8a6d3b);
+    /* Círculo do Empate (Ouro) */
+    .centro-tie {
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(circle, #cc9933 0%, #664411 100%);
         border-radius: 50%;
         z-index: 10;
+        left: 50%;
+        transform: translateX(-50%);
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        border: 5px solid #ffcc33;
-        box-shadow: 0 0 30px rgba(0,0,0,0.6);
-        text-align: center;
-        font-size: 14px;
-        color: white;
+        border: 4px solid #ffcc66;
+        box-shadow: 0 0 20px rgba(0,0,0,0.8);
     }
 
-    /* EFEITO PISCANTE DE ÁGUA NO SINAL (RESERVA DE APOSTA) */
-    @keyframes agua-glow {
-        0% { box-shadow: 0 0 10px rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.2); }
-        50% { box-shadow: 0 0 60px #fff, inset 0 0 20px #fff; border-color: #fff; transform: scale(1.02); }
-        100% { box-shadow: 0 0 10px rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.2); }
+    /* Efeito de Piscada no Sinal */
+    @keyframes blink-sinal {
+        0% { border-color: #fff; box-shadow: 0 0 10px #fff; }
+        50% { border-color: #fff; box-shadow: 0 0 60px #fff; filter: brightness(1.5); }
+        100% { border-color: #fff; box-shadow: 0 0 10px #fff; }
     }
-
     .sinal-ativo {
-        animation: agua-glow 0.8s infinite alternate;
-        z-index: 50;
-        border: 3px solid #fff !important;
+        animation: blink-sinal 0.6s infinite alternate !important;
+        z-index: 20;
     }
 
-    /* BEAD ROAD IGUAL À IMAGEM */
-    .bead-road {
-        background: #fff;
-        border: 2px solid #999;
-        display: grid;
-        grid-template-columns: repeat(24, 25px);
-        grid-template-rows: repeat(6, 25px);
-        gap: 1px;
-        width: fit-content;
+    /* Bead Road (Grade Branca) */
+    .bead-road-container {
+        background: white;
+        border-radius: 5px;
+        padding: 5px;
+        width: 95%;
+        max-width: 450px;
+        height: 160px;
         margin: 20px auto;
-        padding: 2px;
+        overflow-x: auto;
+        border: 2px solid #333;
+    }
+
+    .grid-road {
+        display: grid;
+        grid-template-rows: repeat(6, 22px);
+        grid-auto-flow: column;
+        grid-auto-columns: 22px;
+        gap: 1px;
     }
 
     .bead {
-        width: 25px; height: 25px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 11px; font-weight: bold; color: white;
+        width: 20px;
+        height: 20px;
         border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: bold;
+        color: white;
     }
-    .P { background-color: #0044cc; } /* Jogador */
-    .B { background-color: #cc0033; } /* Banca */
-    .T { background-color: #cc9933; position: relative; } /* Empate */
-    .T::after { content: ''; position: absolute; width: 100%; height: 2px; background: white; transform: rotate(-45deg); }
+    .bead-P { background-color: #0044cc; }
+    .bead-B { background-color: #cc0033; }
+    .bead-T { background-color: #cc9933; position: relative; }
+    .bead-T::after { content: ''; position: absolute; width: 100%; height: 2px; background: white; transform: rotate(-45deg); }
 
-    .stats-container { display: flex; justify-content: center; gap: 20px; margin-top: 10px; font-size: 12px; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- MOTOR DE INTELIGÊNCIA ---
+# --- ENGINE ---
 if 'wins' not in st.session_state: st.session_state.wins = 0
 if 'losses' not in st.session_state: st.session_state.losses = 0
 
-def get_live_history():
+def fetch_data():
     try:
         scraper = cloudscraper.create_scraper()
         res = scraper.get("https://www.trackcasino.com/bacbo", timeout=10).text
         found = re.findall(r'>(P|B|T)<', res)
-        return found[:144]
+        return found[:120] if found else ["P", "B", "P"]
     except:
-        return ["P", "B", "P", "B", "T", "B", "P", "B"]
+        return ["P", "B", "T"]
 
-# Lógica de Predição
-def predict(h):
-    if len(h) < 3: return None
-    # Estratégia de Quebra de 3
-    if h[:3] == ["P", "P", "P"]: return "B"
-    if h[:3] == ["B", "B", "B"]: return "P"
-    # Estratégia de Ping-Pong
-    if h[:4] == ["P", "B", "P", "B"]: return "P"
-    if h[:4] == ["B", "P", "B", "P"]: return "B"
-    return None
+history = fetch_data()
+
+# Lógica de Estratégia
+pred = None
+if len(history) >= 3:
+    if history[:3] == ["P", "P", "P"]: pred = "B"
+    elif history[:3] == ["B", "B", "B"]: pred = "P"
 
 # --- UI ---
-history = get_live_history()
-pred = predict(history)
+st.markdown("<h4 style='text-align: center; color: #555;'>BAC BO ELITE AI</h4>", unsafe_allow_html=True)
 
-st.markdown("<h3 style='text-align: center; color: rgba(255,255,255,0.5);'>BAC BO AI PREDICTOR - tarcoboss</h3>", unsafe_allow_html=True)
-
-# ASA JOGADOR | EMPATE | ASA BANCA
-j_class = "sinal-ativo" if pred == "P" else ""
-b_class = "sinal-ativo" if pred == "B" else ""
+# Mesa de Apostas
+j_active = "sinal-ativo" if pred == "P" else ""
+b_active = "sinal-ativo" if pred == "B" else ""
 
 st.markdown(f"""
-<div class="mesa-bacbo">
-    <div class="asa asa-jogador {j_class}">
-        <span style="font-size: 12px; opacity: 0.6;">1:1</span>
-        <span style="font-size: 26px; font-weight: 700;">JOGADOR</span>
+<div class="mesa-container">
+    <div class="asa asa-jogador {j_active}">
+        <span style="font-size: 10px; opacity: 0.6;">1:1</span>
+        <span style="font-size: 20px; font-weight: 900;">JOGADOR</span>
     </div>
-    <div class="centro-empate">
-        <span style="font-size: 10px; opacity: 0.8;">EMPATE</span>
-        <span style="font-size: 20px; font-weight: 700;">88:1</span>
-        <span style="font-size: 9px; opacity: 0.6;">MAX PAGAMENTO</span>
+    <div class="centro-tie">
+        <span style="font-size: 9px; opacity: 0.8;">EMPATE</span>
+        <span style="font-size: 22px; font-weight: 900;">88:1</span>
     </div>
-    <div class="asa asa-banca {b_class}">
-        <span style="font-size: 12px; opacity: 0.6;">1:1</span>
-        <span style="font-size: 26px; font-weight: 700;">BANCA</span>
+    <div class="asa asa-banca {b_active}">
+        <span style="font-size: 10px; opacity: 0.6;">1:1</span>
+        <span style="font-size: 20px; font-weight: 900;">BANCA</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Porcentagens (Fictícias baseadas no histórico)
-st.markdown("""
-<div class="stats-container">
-    <span style="color: #0055ff;">JOGADOR 54%</span>
-    <span style="color: #ffaa00;">EMPATE 10%</span>
-    <span style="color: #ff0044;">BANCA 36%</span>
-</div>
-""", unsafe_allow_html=True)
+# Barra de Stats
+st.markdown("<p style='text-align: center; font-size: 12px;'>🔵 54% | 🟡 10% | 🔴 36%</p>", unsafe_allow_html=True)
 
-# BEAD ROAD (GRADE)
-st.markdown("<div class='bead-road'>", unsafe_allow_html=True)
-road_html = "".join([f'<div class="bead {r}">{r if r!="T" else ""}</div>' for r in history])
-st.markdown(road_html + "</div>", unsafe_allow_html=True)
+# Bead Road (Grade Branca)
+road_html = '<div class="bead-road-container"><div class="grid-road">'
+for r in reversed(history[:120]): # Ordem correta da esquerda para a direita
+    road_html += f'<div class="bead bead-{r}">{r if r!="T" else ""}</div>'
+road_html += '</div></div>'
+st.markdown(road_html, unsafe_allow_html=True)
 
-# PLACAR E GESTÃO
+# Placar e Botões
 st.divider()
-c1, c2, c3 = st.columns([1, 2, 1])
-with c2:
-    if pred:
-        st.success(f"🎯 ENTRADA CONFIRMADA: {'JOGADOR' if pred=='P' else 'BANCA'}")
-        cw, cl = st.columns(2)
-        if cw.button("✅ GREEN"):
-            st.session_state.wins += 1
-            st.rerun()
-        if cl.button("❌ LOSS"):
-            st.session_state.losses += 1
-            st.rerun()
-    else:
-        st.info("🔎 MONITORANDO MESA... AGUARDANDO PADRÃO DE ENTRADA.")
+if pred:
+    st.success(f"ENTRADA: {'JOGADOR' if pred=='P' else 'BANCA'}")
+    c1, c2 = st.columns(2)
+    if c1.button("✅ GREEN"):
+        st.session_state.wins += 1
+        st.rerun()
+    if c2.button("❌ LOSS"):
+        st.session_state.losses += 1
+        st.rerun()
 
-st.write(f"PLACAR: {st.session_state.wins} | {st.session_state.losses}")
+st.write(f"PLACAR: {st.session_state.wins} - {st.session_state.losses}")
 
-# REFRESH
 time.sleep(12)
 st.rerun()
